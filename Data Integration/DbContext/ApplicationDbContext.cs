@@ -11,7 +11,6 @@ namespace Data_Integration
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-           // GlobalQueryFilters.CreateGlobalIsDeletedQueryFilter(modelBuilder);
             base.OnModelCreating(modelBuilder);
         }
     }

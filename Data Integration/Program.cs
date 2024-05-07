@@ -1,4 +1,6 @@
 using Data_Integration;
+using DeliveryIntegration.Configrations;
+using DeliveryIntegration.Services.HttpRequest;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,3 +32,13 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+void InjectService()
+{
+    builder.Services.AddHttpClient<IHttpRequestService, HttpRequestService>();
+}
+void SetConfigurations()
+{
+    builder.Services.Configure<RabbitMQConfig>(builder.Configuration.GetSection(nameof(RabbitMQConfig)));
+
+}
