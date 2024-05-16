@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Data_Integration.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Data_Integration
 {
@@ -13,5 +14,7 @@ namespace Data_Integration
         {
             base.OnModelCreating(modelBuilder);
         }
+
+        public DbSet<Product> Product { get; set; }
     }
 }
