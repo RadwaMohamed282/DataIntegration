@@ -15,6 +15,6 @@ namespace Data_Integration
             base.OnModelCreating(modelBuilder);
         }
 
-        public DbSet<Product> Product { get; set; }
+        public DbSet<SubscribeToOffer> SubscribeToOffers { get; set; }
     }
 }

@@ -1,41 +1,34 @@
 ﻿using Data_Integration.Models;
-using Data_Integration.Services.ProductDetails;
 using DeliveryIntegration.Configrations;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 
-
 namespace Data_Integration.Services.RabbitMQ
 {
     public class Consumer : BackgroundService
     {
         private readonly RabbitMQConfig _rabbitMQConfig;
-        public IServiceProvider _services { get; }
-        private readonly IModel _channel;
         private readonly ILogger<Consumer> _logger;
-        private readonly ApplicationDbContext _dbContext;
-        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IModel _channel;
 
-        public Consumer(ApplicationDbContext dbContext,IOptions<RabbitMQConfig> options, IServiceProvider services, ILogger<Consumer> logger, IDbContextFactory<ApplicationDbContext> contextFactory)
+        public Consumer(IOptions<RabbitMQConfig> options, ILogger<Consumer> logger, IServiceProvider serviceProvider)
         {
             _rabbitMQConfig = options.Value;
-            _services = services;
             _logger = logger;
+            _serviceProvider = serviceProvider;
+
             var factory = new ConnectionFactory() { HostName = _rabbitMQConfig.HostName, UserName = _rabbitMQConfig.UserName, Password = _rabbitMQConfig.Password };
-            //   Console.WriteLine(_rabbitMQConfig.HostName);
             var connection = factory.CreateConnection();
             _channel = connection.CreateModel();
-           // _dbContext = dbContext;
-            _contextFactory = contextFactory;
         }
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            stoppingToken.ThrowIfCancellationRequested();
+            Console.WriteLine("Consumer running");
 
             _channel.QueueDeclare(queue: _rabbitMQConfig.QueueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
 
@@ -45,38 +38,35 @@ namespace Data_Integration.Services.RabbitMQ
             {
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
-                //    _channel.BasicAck(ea.DeliveryTag, false);
-                _logger.LogInformation("Received message: {Message}", message);
 
-                //await UpdateProductData(message);
-
+                await ProcessMessageAsync(message);
             };
 
             _channel.BasicConsume(queue: _rabbitMQConfig.QueueName, autoAck: true, consumer: consumer);
-            return Task.CompletedTask;
+
+            await Task.CompletedTask;
         }
 
-        //private async Task UpdateProductData(string message)
-        //{
-        //    try
-        //    {
-        //        using (var context = _contextFactory.CreateDbContext())
-        //        {
-        //            var scope = _services.CreateScope();
+        private async Task ProcessMessageAsync(string message)
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        //            var scopedProcessingService = scope.ServiceProvider.GetRequiredService<IProductServices>();
+                var coupon = JsonConvert.DeserializeObject<SubscribeToOffer>(message);
 
-        //            Product ProductDetails = JsonConvert.DeserializeObject<Product>(message);
+                dbContext.SubscribeToOffers.Add(coupon);
 
-        //            await scopedProcessingService.AddProducts(ProductDetails);
-        //        }
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError("Error saving message to database" + ex);
-        //    }
-        //}
+                try
+                {
+                    await dbContext.SaveChangesAsync();
+                    _logger.LogInformation("Message processed successfully: {Message}", message);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error processing message: {Message}", message);
+                }
+            }
+        }
     }
 }
-

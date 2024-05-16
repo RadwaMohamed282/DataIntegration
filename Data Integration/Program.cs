@@ -1,5 +1,4 @@
 using Data_Integration;
-using Data_Integration.Services.ProductDetails;
 using Data_Integration.Services.RabbitMQ;
 using DeliveryIntegration.Configrations;
 using DeliveryIntegration.Services.HttpRequest;
@@ -44,8 +43,8 @@ app.Run();
 void InjectService()
 {
     builder.Services.AddHttpClient<IHttpRequestService, HttpRequestService>();
-    builder.Services.AddTransient<IProductServices, ProductServices>();
     builder.Services.AddHostedService<Consumer>();
+
 }
 void SetConfigurations()
 {
