@@ -16,5 +16,6 @@ namespace Data_Integration
         }
 
         public DbSet<SubscribeToOffer> SubscribeToOffers { get; set; }
+        public DbSet<RewardLoyalty> RewardLoyaltys { get; set; }
     }
 }

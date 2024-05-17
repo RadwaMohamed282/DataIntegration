@@ -43,7 +43,8 @@ app.Run();
 void InjectService()
 {
     builder.Services.AddHttpClient<IHttpRequestService, HttpRequestService>();
-    builder.Services.AddHostedService<Consumer>();
+    builder.Services.AddHostedService<CouponzConsumer>();
+    builder.Services.AddHostedService<LoyaltyConsumer>();
 
 }
 void SetConfigurations()

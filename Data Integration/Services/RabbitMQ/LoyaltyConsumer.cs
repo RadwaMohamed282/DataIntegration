@@ -8,20 +8,24 @@ using System.Text;
 
 namespace Data_Integration.Services.RabbitMQ
 {
-    public class Consumer : BackgroundService
+    public class LoyaltyConsumer : BackgroundService
     {
         private readonly RabbitMQConfig _rabbitMQConfig;
-        private readonly ILogger<Consumer> _logger;
+        private readonly ILogger<CouponzConsumer> _logger;
         private readonly IServiceProvider _serviceProvider;
         private readonly IModel _channel;
 
-        public Consumer(IOptions<RabbitMQConfig> options, ILogger<Consumer> logger, IServiceProvider serviceProvider)
+        public LoyaltyConsumer(IOptions<RabbitMQConfig> options, ILogger<CouponzConsumer> logger, IServiceProvider serviceProvider)
         {
             _rabbitMQConfig = options.Value;
             _logger = logger;
             _serviceProvider = serviceProvider;
 
-            var factory = new ConnectionFactory() { HostName = _rabbitMQConfig.HostName, UserName = _rabbitMQConfig.UserName, Password = _rabbitMQConfig.Password };
+            var factory = new ConnectionFactory() {
+                HostName = _rabbitMQConfig.HostName, 
+                UserName = _rabbitMQConfig.UserName, 
+                Password = _rabbitMQConfig.Password 
+            };
             var connection = factory.CreateConnection();
             _channel = connection.CreateModel();
         }
@@ -30,7 +34,7 @@ namespace Data_Integration.Services.RabbitMQ
         {
             Console.WriteLine("Consumer running");
 
-            _channel.QueueDeclare(queue: _rabbitMQConfig.QueueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
+            _channel.QueueDeclare(queue: _rabbitMQConfig.LoyaltyQueue, durable: true, exclusive: false, autoDelete: false, arguments: null);
 
             var consumer = new EventingBasicConsumer(_channel);
 
@@ -42,7 +46,8 @@ namespace Data_Integration.Services.RabbitMQ
                 await ProcessMessageAsync(message);
             };
 
-            _channel.BasicConsume(queue: _rabbitMQConfig.QueueName, autoAck: true, consumer: consumer);
+            _channel.BasicConsume(queue: _rabbitMQConfig.LoyaltyQueue, autoAck: true, consumer: consumer);
+            _logger.LogInformation("QueueName: ", _rabbitMQConfig.LoyaltyQueue);
 
             await Task.CompletedTask;
         }
@@ -53,9 +58,9 @@ namespace Data_Integration.Services.RabbitMQ
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-                var coupon = JsonConvert.DeserializeObject<SubscribeToOffer>(message);
-
-                dbContext.SubscribeToOffers.Add(coupon);
+                var loyalty = JsonConvert.DeserializeObject<RewardLoyalty>(message);
+                
+                dbContext.RewardLoyaltys.Add(loyalty);
 
                 try
                 {
