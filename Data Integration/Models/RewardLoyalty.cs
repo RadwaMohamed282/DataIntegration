@@ -6,5 +6,7 @@
         public string WalletCode { get; set; }
         public int PointsValue { get; set; }
         public string ExternalLogId { get; set; }
+        public DateTime? CreationDate { get; set; } = DateTime.Now;
+
     }
 }

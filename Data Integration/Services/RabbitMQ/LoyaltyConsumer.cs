@@ -58,14 +58,23 @@ namespace Data_Integration.Services.RabbitMQ
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-                var loyalty = JsonConvert.DeserializeObject<RewardLoyalty>(message);
-                
-                dbContext.RewardLoyaltys.Add(loyalty);
-
                 try
                 {
+                    var loyalty = JsonConvert.DeserializeObject<List<RewardLoyalty>>(message);
+                    if (loyalty == null || !loyalty.Any())
+                    {
+                        throw new InvalidOperationException("No valid subscriptions found in the input data.");
+                    }
+
+                    dbContext.RewardLoyaltys.AddRange(loyalty);
+
                     await dbContext.SaveChangesAsync();
+
                     _logger.LogInformation("Message processed successfully: {Message}", message);
+                }
+                catch (JsonSerializationException ex)
+                {
+                    _logger.LogError("JSON deserialization error:", ex.Message);
                 }
                 catch (Exception ex)
                 {

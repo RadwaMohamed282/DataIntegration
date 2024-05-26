@@ -58,14 +58,23 @@ namespace Data_Integration.Services.RabbitMQ
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-                var coupon = JsonConvert.DeserializeObject<SubscribeToOffer>(message);
-                
-                dbContext.SubscribeToOffers.Add(coupon);
-
                 try
                 {
+                    var coupon = JsonConvert.DeserializeObject<List<SubscribeToOffer>>(message);
+                    if (coupon == null || !coupon.Any())
+                    {
+                        // Handle the error (log, throw exception, etc.)
+                        throw new InvalidOperationException("No valid subscriptions found in the input data.");
+                    }
+                    dbContext.SubscribeToOffers.AddRange(coupon);
+
                     await dbContext.SaveChangesAsync();
+
                     _logger.LogInformation("Message processed successfully: {Message}", message);
+                }
+                catch (JsonSerializationException ex)
+                {
+                    _logger.LogError("JSON deserialization error:", ex.Message);
                 }
                 catch (Exception ex)
                 {
