@@ -1,4 +1,5 @@
 using Data_Integration;
+using Data_Integration.Services.FtpServer;
 using Data_Integration.Services.RabbitMQ;
 using DeliveryIntegration.Configrations;
 using DeliveryIntegration.Services.HttpRequest;
@@ -51,6 +52,7 @@ void InjectService()
     builder.Services.AddHttpClient<IHttpRequestService, HttpRequestService>();
     builder.Services.AddHostedService<CouponzConsumer>();
     builder.Services.AddHostedService<LoyaltyConsumer>();
+    builder.Services.AddHostedService<CouponzFTPServer>();
 
 }
 void SetConfigurations()

@@ -1,5 +1,6 @@
 ﻿using Data_Integration.Models;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml.Drawing.Chart.ChartEx;
 
 namespace Data_Integration
 {
@@ -26,9 +27,16 @@ namespace Data_Integration
                 entity.Property(x => x.WalletCode).IsRequired();
                 entity.Property(x => x.PointsValue).IsRequired();
             });
+            modelBuilder.Entity<SubscribeToOfferFTP>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.OfferNumbers).IsRequired();
+                entity.Property(x => x.MSISDN).IsRequired();
+            });
         }
 
         public DbSet<SubscribeToOffer> SubscribeToOffers { get; set; }
         public DbSet<RewardLoyalty> RewardLoyaltys { get; set; }
+        public DbSet<SubscribeToOfferFTP> SubscribeToOffersFTP { get; set; }
     }
 }
